@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Handbook Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<h1>Login with Google</h1>
+
+<div id="g_id_onload"
+     data-client_id="720725541229-ua464japbakp70o1f6ln8bq5p9crfe5f.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<script>
+    function handleCredentialResponse(response) {
+      fetch("/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ token: response.credential })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert("Login failed: " + data.error);
+          return;
+        }
+
+        console.log("Login Success", data);
+        alert("Welcome, " + data.name);
+
+        // ✅ Store data in session storage
+        sessionStorage.setItem("user", JSON.stringify({
+          name: data.name,
+          email: data.email,
+          picture: data.picture
+        }));
+
+        // ✅ Redirect to dashboard
+        window.location.href = "/dashboard.html";
+      })
+      .catch(err => {
+        console.error("Login Failed", err);
+      });
+    }
+</script>
+
+</body>
+</html>

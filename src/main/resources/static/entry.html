@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Add New Content - Smart Handbook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- CodeMirror (for code editor) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 30px;
+          background-color: #f3f4f6;
+        }
+
+        h2 {
+          margin-bottom: 20px;
+        }
+
+        label {
+          display: block;
+          margin-top: 15px;
+          font-weight: bold;
+        }
+
+        input[type="text"], select, textarea {
+          width: 100%;
+          padding: 10px;
+          margin-top: 5px;
+          font-size: 16px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+        }
+
+        .preview {
+          margin-top: 10px;
+        }
+
+        #code-editor {
+          border: 1px solid #ccc;
+          height: 200px;
+          border-radius: 6px;
+        }
+
+        button {
+          margin-top: 25px;
+          padding: 10px 20px;
+          background-color: #10b981;
+          color: white;
+          border: none;
+          font-size: 16px;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+
+        button:hover {
+          background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Add New Handbook Entry</h2>
+
+<form id="entryForm">
+    <label for="title">Title:</label>
+    <input type="text" id="title" required />
+
+    <label for="type">Type:</label>
+    <select id="type" required>
+        <option value="">Select</option>
+        <option value="text">Text</option>
+        <option value="picture">Picture</option>
+        <option value="code">Code</option>
+    </select>
+
+    <!-- Textarea for text -->
+    <div id="text-section" class="preview" style="display:none;">
+        <label for="text-content">Enter Text:</label>
+        <textarea id="text-content" rows="6"></textarea>
+    </div>
+
+    <!-- File input for image -->
+    <div id="image-section" class="preview" style="display:none;">
+        <label for="image-content">Upload Image:</label>
+        <input type="file" id="image-content" accept="image/*" />
+        <div id="image-preview" style="margin-top: 10px;"></div>
+    </div>
+
+    <!-- Code editor -->
+    <div id="code-section" class="preview" style="display:none;">
+        <label>Enter Code:</label>
+        <textarea id="code-editor"></textarea>
+    </div>
+
+    <button type="submit">Save Entry</button>
+</form>
+
+<!-- Script Section -->
+<script>
+    let codeMirror;
+
+    document.getElementById("type").addEventListener("change", (e) => {
+      const val = e.target.value;
+      document.getElementById("text-section").style.display = "none";
+      document.getElementById("image-section").style.display = "none";
+      document.getElementById("code-section").style.display = "none";
+
+      if (val === "text") {
+        document.getElementById("text-section").style.display = "block";
+      } else if (val === "picture") {
+        document.getElementById("image-section").style.display = "block";
+      } else if (val === "code") {
+        document.getElementById("code-section").style.display = "block";
+        if (!codeMirror) {
+          codeMirror = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: "javascript",
+            lineNumbers: true,
+            theme: "default"
+          });
+        }
+      }
+    });
+
+    document.getElementById("image-content").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById("image-preview").innerHTML = `<img src="${e.target.result}" style="max-width:100%; height:auto;" />`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById("entryForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const title = document.getElementById("title").value;
+      const type = document.getElementById("type").value;
+
+      let content = "";
+      if (type === "text") {
+        content = document.getElementById("text-content").value;
+      } else if (type === "code") {
+        content = codeMirror.getValue();
+      } else if (type === "picture") {
+        const file = document.getElementById("image-content").files[0];
+if (!file) return alert("Please select an image!");
+
+const user = JSON.parse(sessionStorage.getItem("user"));
+const formData = new FormData();
+formData.append("file", file);
+formData.append("email", user.email); // ✅ important
+
+const res = await fetch("/api/upload", {
+  method: "POST",
+  body: formData
+});
+
+const data = await res.json();
+content = data.url;
+
+      }
+
+      const user = JSON.parse(sessionStorage.getItem("user"));
+
+const payload = {
+  title,
+  type,
+  content,
+  userEmail: user.email
+};
+
+
+      await fetch("/api/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      alert("Entry saved!");
+      window.location.href = "/dashboard.html";
+    });
+</script>
+</body>
+</html>

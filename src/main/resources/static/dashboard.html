@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Handbook Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding-top: 60px;
+          background-color: #f9fafb;
+        }
+
+        nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          background-color: #1f2937;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 20px;
+          flex-wrap: wrap;
+          z-index: 1000;
+        }
+
+        .nav-left,
+        .nav-right {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .nav-left img {
+          height: 32px;
+        }
+
+        .nav-left a {
+          color: white;
+          text-decoration: none;
+          font-weight: 500;
+          padding: 6px 10px;
+        }
+
+        .nav-left a:hover {
+          background-color: #374151;
+          border-radius: 4px;
+        }
+
+        .nav-right {
+          gap: 15px;
+        }
+
+        .nav-right img {
+          border-radius: 50%;
+          height: 32px;
+          width: 32px;
+        }
+
+        .nav-right button {
+          background-color: #ef4444;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        .nav-right button:hover {
+          background-color: #dc2626;
+        }
+
+        .content {
+          padding: 20px;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+          nav {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .nav-left,
+          .nav-right {
+            width: 100%;
+            justify-content: space-between;
+            padding: 5px 0;
+          }
+
+          .nav-left a {
+            font-size: 14px;
+          }
+
+          .nav-right span {
+            font-size: 14px;
+          }
+
+          .nav-right img {
+            height: 28px;
+            width: 28px;
+          }
+
+          .nav-right button {
+            padding: 5px 10px;
+            font-size: 14px;
+          }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav>
+    <div class="nav-left">
+        <img src="/images/logoW.png" alt="Logo" />
+        <a href="/entry.html">Text</a>
+        <a href="#">Picture</a>
+        <a href="#">Code</a>
+    </div>
+
+    <div class="nav-right">
+        <span id="user-name"></span>
+        <img id="user-pic" src="" alt="User" />
+        <button onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<!-- Page Content -->
+<!--<div class="content">-->
+<!--    <h2>Your Handbook Entries</h2>-->
+<!--    <div id="cards-container" style="display: flex; flex-wrap: wrap; gap: 20px;"></div>-->
+<!--</div>-->
+<div class="content">
+    <h2>Your Handbook Entries</h2>
+    <div id="filterBar">
+        <select id="typeFilter">
+            <option value="all">All Types</option>
+            <option value="text">Text</option>
+            <option value="code">Code</option>
+            <option value="picture">Picture</option>
+        </select>
+        <select id="sortOrder">
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="Search by title...">
+    </div>
+    <div id="cards-container" style="display: flex; flex-wrap: wrap; gap: 20px;"></div>
+</div>
+<!-- Edit Modal -->
+<div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background-color:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:8px; width:90%; max-width:500px; position:relative;">
+        <h3>Edit Content</h3>
+        <form id="editForm">
+            <input type="hidden" id="editId" />
+            <input type="hidden" id="editEmail" />
+            <label>Title:</label>
+            <input type="text" id="editTitle" style="width:100%; margin-bottom:10px;" required />
+            <label>Content:</label>
+            <textarea id="editContent" style="width:100%; height:100px;" required></textarea>
+            <br><br>
+            <button type="submit" style="background:#10b981; color:white; padding:8px 14px; border:none; border-radius:4px;">Save</button>
+            <button type="button" onclick="closeModal()" style="margin-left:10px; background:#6b7280; color:white; padding:8px 14px; border:none; border-radius:4px;">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<!-- JS to load user and logout -->
+<script>
+
+    const user = JSON.parse(sessionStorage.getItem("user"));
+
+    if (!user) {
+      window.location.href = "/";
+    } else {
+      document.getElementById("user-name").textContent = user.name;
+      document.getElementById("user-pic").src = user.picture;
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.replace("/");
+    }
+
+    window.addEventListener("pageshow", () => {
+      const user = JSON.parse(sessionStorage.getItem("user"));
+      if (!user) {
+        window.location.href = "/";
+      }
+    });
+
+    function renderCards(data) {
+  const container = document.getElementById("cards-container");
+  container.innerHTML = "";
+
+  if (data.length === 0) {
+    container.innerHTML = "<p>No content matches your filters.</p>";
+    return;
+  }
+
+  data.forEach(item => {
+    const card = document.createElement("div");
+    card.style.width = "300px";
+    card.style.border = "1px solid #ccc";
+    card.style.borderRadius = "10px";
+    card.style.padding = "15px";
+    card.style.background = "#fff";
+    card.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+
+    let contentHTML = "";
+    if (item.type === "text") {
+      contentHTML = `<pre style="max-height:150px; overflow:auto; background:#f3f4f6; padding:10px; border-radius:5px;">${item.content}</pre>`;
+    } else if (item.type === "code") {
+      contentHTML = `<pre style="max-height:150px; overflow:auto; background:#1e293b; color:#f1f5f9; padding:10px; border-radius:5px;"><code>${item.content}</code></pre>`;
+    } else if (item.type === "picture" || item.type === "image") {
+      contentHTML = `<img src="${item.content}" alt="${item.title}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;" />`;
+    }
+
+    const token = btoa(`${item.id}|${user.email}`);
+
+    card.innerHTML = `
+      <a href="/view.html?tkn=${token}" style="text-decoration:none; color:inherit;">
+        <h3>${item.title}</h3>
+        <p><strong>Type:</strong> ${item.type}</p>
+        <p><strong>Created:</strong> ${new Date(item.createdAt.seconds * 1000).toLocaleString()}</p>
+        ${contentHTML}
+      </a>
+      <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onclick="editContent('${item.id}', '${user.email}')"
+          style="padding:6px 10px; background-color:#facc15; color:black; border:none; border-radius:5px; cursor:pointer;">
+          Edit
+        </button>
+        <button onclick="deleteContent('${item.id}', '${user.email}')"
+          style="padding:6px 10px; background-color:#ef4444; color:white; border:none; border-radius:5px; cursor:pointer;">
+          Delete
+        </button>
+        <button onclick="exportQR('${item.id}', '${user.email}')"
+          style="padding:6px 10px; background-color:#3b82f6; color:white; border:none; border-radius:5px; cursor:pointer;">
+          Export QR
+        </button>
+      </div>
+      <div id="qr-${item.id}" style="margin-top:10px;"></div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+fetch(`/api/content?email=${encodeURIComponent(user.email)}`)
+  .then(res => res.json())
+  .then(data => {
+    originalData = data;
+    applyFilters();
+  })
+  .catch(err => console.error("Failed to load content", err));
+
+  // Called when "Edit" button is clicked
+  function editContent(id, email) {
+    fetch(`/api/content/update/${id}?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+      console.log(data);
+      console.log(email);
+        document.getElementById("editId").value = data.id;
+        document.getElementById("editEmail").value = email;
+        document.getElementById("editTitle").value = data.title;
+        document.getElementById("editContent").value = data.content;
+
+        document.getElementById("editModal").style.display = "flex";
+      })
+      .catch(err => {
+        alert("Failed to load content for editing");
+        console.error(err);
+      });
+  }
+
+  function closeModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
+
+  document.getElementById("editForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const id = document.getElementById("editId").value;
+    const email = document.getElementById("editEmail").value;
+    const title = document.getElementById("editTitle").value;
+    const content = document.getElementById("editContent").value;
+
+    fetch(`/api/content/update/${id}?email=${encodeURIComponent(email)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content })
+    })
+      .then(res => {
+        if (res.ok) {
+          closeModal();
+          window.location.reload();
+        } else {
+          throw new Error("Update failed");
+        }
+      })
+      .catch(err => {
+        alert("Failed to update content");
+        console.error(err);
+      });
+  });
+
+    function deleteContent(id, email) {
+      if (confirm("Delete this content?")) {
+        fetch(`/api/content/delete/${id}?email=${encodeURIComponent(email)}`, { method: "DELETE" })
+          .then(() => window.location.reload())
+          .catch(err => alert("Error deleting: " + err));
+      }
+    }
+
+    function exportQR(id, email) {
+      fetch(`/api/qr/${id}?email=${encodeURIComponent(email)}`)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${id}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        })
+        .catch(err => console.error("QR fetch error:", err));
+    }
+
+    function applyFilters() {
+  const type = document.getElementById("typeFilter").value;
+  const sortOrder = document.getElementById("sortOrder").value;
+  const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+
+  let filtered = originalData.filter(item => {
+    const matchesType = type === "all" || item.type === type;
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery);
+    return matchesType && matchesSearch;
+  });
+
+  filtered.sort((a, b) => {
+    const aTime = a.createdAt?.seconds || 0;
+    const bTime = b.createdAt?.seconds || 0;
+    return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
+  });
+
+  renderCards(filtered);
+}
+
+document.getElementById("typeFilter").addEventListener("change", applyFilters);
+document.getElementById("sortOrder").addEventListener("change", applyFilters);
+document.getElementById("searchInput").addEventListener("input", applyFilters);
+</script>
+
+</body>
+</html>
