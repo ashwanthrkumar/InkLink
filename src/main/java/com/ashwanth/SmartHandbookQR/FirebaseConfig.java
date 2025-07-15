@@ -51,18 +51,18 @@ public class FirebaseConfig {
     public void init() {
         try {
             // 1. Get the base64 encoded env variable
-            String firebaseJsonBase64 = System.getenv("FIREBASE_SERVICE_ACCOUNT");
+            String firebaseJson = System.getenv("FIREBASE_SERVICE_ACCOUNT");
 
-            if (firebaseJsonBase64 == null || firebaseJsonBase64.isEmpty()) {
-                throw new IllegalStateException("FIREBASE_SERVICE_ACCOUNT env variable not set or empty");
-            }
+//            if (firebaseJsonBase64 == null || firebaseJsonBase64.isEmpty()) {
+//                throw new IllegalStateException("FIREBASE_SERVICE_ACCOUNT env variable not set or empty");
+//            }
 
             // 2. Decode the Base64 string to get JSON content
-            byte[] decodedBytes = Base64.getDecoder().decode(firebaseJsonBase64);
-            InputStream serviceAccount = new ByteArrayInputStream(decodedBytes);
+//            byte[] decodedBytes = Base64.getDecoder().decode(firebaseJsonBase64);
+//            InputStream serviceAccount = new ByteArrayInputStream(decodedBytes);
 
             // 2. Convert it to InputStream
-           // InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8));
+           InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8));
 
             // 3. Use it for Firebase initialization
             FirebaseOptions options = FirebaseOptions.builder()
