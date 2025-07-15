@@ -42,6 +42,7 @@ import javax.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Configuration
 public class FirebaseConfig {
@@ -49,15 +50,19 @@ public class FirebaseConfig {
     @PostConstruct
     public void init() {
         try {
-            // 1. Get the environment variable
-            String firebaseJson = System.getenv("FIREBASE_SERVICE_ACCOUNT");
+            // 1. Get the base64 encoded env variable
+            String firebaseJsonBase64 = System.getenv("FIREBASE_SERVICE_ACCOUNT");
 
-            if (firebaseJson == null || firebaseJson.isEmpty()) {
+            if (firebaseJsonBase64 == null || firebaseJsonBase64.isEmpty()) {
                 throw new IllegalStateException("FIREBASE_SERVICE_ACCOUNT env variable not set or empty");
             }
 
+            // 2. Decode the Base64 string to get JSON content
+            byte[] decodedBytes = Base64.getDecoder().decode(firebaseJsonBase64);
+            InputStream serviceAccount = new ByteArrayInputStream(decodedBytes);
+
             // 2. Convert it to InputStream
-            InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8));
+           // InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8));
 
             // 3. Use it for Firebase initialization
             FirebaseOptions options = FirebaseOptions.builder()
