@@ -30,7 +30,7 @@ public class QRCodeController {
         String rawToken = item.getId() + "|" + item.getUserEmail();
         String encodedToken = Base64.getEncoder().encodeToString(rawToken.getBytes());
 
-        String qrUrl = "https://inklink-3x7l.onrender.com/view.html?tkn=" + encodedToken;
+        String qrUrl = "https://inklink-720725541229.asia-south1.run.app/view.html?tkn=" + encodedToken;
 
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         var bitMatrix = qrCodeWriter.encode(qrUrl, BarcodeFormat.QR_CODE, 300, 300);
