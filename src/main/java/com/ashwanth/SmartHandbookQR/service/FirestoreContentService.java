@@ -17,7 +17,7 @@ import java.util.Map;
 @Service
 public class FirestoreContentService {
 
-   // private final String COLLECTION_NAME = "content";
+    // private final String COLLECTION_NAME = "content";
     public List<ContentItem> getContentForUser(String email) throws Exception {
         Firestore firestore = FirestoreClient.getFirestore();
         CollectionReference entries = firestore
@@ -34,7 +34,7 @@ public class FirestoreContentService {
             item.setId(doc.getId());
             item.setUserEmail(email);
             items.add(item);
-           // System.out.print(item);
+            // System.out.print(item);
         }
         return items;
     }
@@ -83,8 +83,10 @@ public class FirestoreContentService {
         // Convert Firestore Timestamp to LocalDateTime
         Timestamp ts = doc.getTimestamp("createdAt");
         if (ts != null) {
-            item.setCreatedAt(item.getCreatedAt());
+            item.setCreatedAt(ts);  // ✅ set directly
         }
+
+
 
         return item;
     }

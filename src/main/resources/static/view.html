@@ -2,136 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>View Content</title>
-    <style>
-        /* Modal Styles */
-        #edit-modal {
-          display: none;
-          position: fixed;
-          z-index: 9999;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.6);
-        }
-
-        #edit-modal-content {
-          background: #fff;
-          margin: 10% auto;
-          padding: 20px;
-          border-radius: 10px;
-          width: 90%;
-          max-width: 500px;
-        }
-
-        #edit-modal-content input,
-        #edit-modal-content textarea {
-          width: 100%;
-          padding: 8px;
-          margin-bottom: 12px;
-        }
-
-        #edit-modal-content button {
-          margin-right: 10px;
-        }
-    </style>
+    <title>Smart Handbook Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-<div id="content-view"></div>
+<h1>Login with Google</h1>
+
+<div id="g_id_onload"
+     data-client_id="720725541229-ua464japbakp70o1f6ln8bq5p9crfe5f.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("tkn");
-
-    if (!token) {
-      document.getElementById("content-view").innerHTML = "Invalid or missing token.";
-      throw new Error("Missing token");
-    }
-
-    const [id, emailFromToken] = atob(token).split("|");
-    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
-    const userEmail = loggedInUser?.email;
-    let currentData = null;
-
-    fetch(`/api/content/${id}?email=${encodeURIComponent(emailFromToken)}`)
-      .then(res => res.json())
-      .then(data => {
-        currentData = data;
-        const container = document.getElementById("content-view");
-        const isOwner = userEmail && userEmail === data.userEmail;
-
-        let contentHTML = "";
-        if (data.type === "picture") {
-          contentHTML = `<img src="${data.content}" style="max-width:100%;" />`;
-        } else if (data.type === "code") {
-          contentHTML = `<pre style="max-height:150px; overflow:auto; background:#1e293b; color:#f1f5f9; padding:10px; border-radius:5px;"><code>${data.content}</code></pre>`;
-        } else {
-          contentHTML = `<p>${data.content}</p>`;
-        }
-
-        container.innerHTML = `
-          <h2>${data.title}</h2>
-          <p><strong>Type:</strong> ${data.type}</p>
-          <p><strong>Created:</strong> ${new Date(data.createdAt).toLocaleString()}</p>
-          ${contentHTML}
-          ${isOwner ? `
-
-
-          ` : ``}
-        `;
-      })
-      .catch(err => {
-        console.error("Fetch error:", err);
-        document.getElementById("content-view").innerHTML = "Error loading content.";
-      });
-
-    function deleteContent(id, email) {
-      if (confirm("Delete this content?")) {
-        fetch(`/api/content/delete/${id}?email=${encodeURIComponent(email)}`, {
-          method: "DELETE"
-        }).then(() => window.location.href = "/dashboard.html");
-      }
-    }
-
-    // Modal controls
-    function openEditModal() {
-      document.getElementById("edit-title").value = currentData.title;
-      document.getElementById("edit-type").value = currentData.type;
-      document.getElementById("edit-content").value = currentData.content;
-      document.getElementById("edit-modal").style.display = "block";
-    }
-
-    function closeModal() {
-      document.getElementById("edit-modal").style.display = "none";
-    }
-
-    function saveEdit() {
-      const updatedData = {
-        id: currentData.id,
-        title: document.getElementById("edit-title").value,
-        type: document.getElementById("edit-type").value,
-        content: document.getElementById("edit-content").value,
-        userEmail: currentData.userEmail
-      };
-
-      fetch(`/api/content/update`, {
-        method: "PUT",
+    function handleCredentialResponse(response) {
+      fetch("/api/auth/google", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(updatedData)
+        body: JSON.stringify({ token: response.credential })
       })
-      .then(res => {
-        if (res.ok) {
-          alert("Updated successfully!");
-         window.location.href = "/dashboard.html";
-        } else {
-          throw new Error("Update failed");
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert("Login failed: " + data.error);
+          return;
         }
+
+        console.log("Login Success", data);
+
+
+        // ✅ Store data in session storage
+        sessionStorage.setItem("user", JSON.stringify({
+          name: data.name,
+          email: data.email,
+          picture: data.picture
+        }));
+
+        // ✅ Redirect to dashboard
+        window.location.href = "/dashboard.html";
       })
-      .catch(err => alert("Error updating content: " + err));
+      .catch(err => {
+        console.error("Login Failed", err);
+      });
     }
 </script>
+
 </body>
 </html>

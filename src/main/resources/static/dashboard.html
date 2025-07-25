@@ -10,10 +10,11 @@
         }
 
         body {
-          font-family: Arial, sans-serif;
+          font-family: 'Segoe UI', Tahoma, sans-serif;
           margin: 0;
           padding-top: 60px;
-          background-color: #f9fafb;
+          background-color: #f1f5f9;
+          color: #1e293b;
         }
 
         nav {
@@ -26,9 +27,10 @@
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 10px 20px;
+          padding: 12px 24px;
           flex-wrap: wrap;
           z-index: 1000;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
         .nav-left,
@@ -45,32 +47,32 @@
         .nav-left a {
           color: white;
           text-decoration: none;
-          font-weight: 500;
-          padding: 6px 10px;
+          font-weight: 600;
+          padding: 8px 12px;
+          border-radius: 6px;
+          transition: background 0.3s;
         }
 
         .nav-left a:hover {
           background-color: #374151;
-          border-radius: 4px;
-        }
-
-        .nav-right {
-          gap: 15px;
         }
 
         .nav-right img {
           border-radius: 50%;
-          height: 32px;
-          width: 32px;
+          height: 36px;
+          width: 36px;
+          object-fit: cover;
         }
 
         .nav-right button {
           background-color: #ef4444;
           color: white;
           border: none;
-          padding: 6px 12px;
-          border-radius: 5px;
+          padding: 8px 14px;
+          border-radius: 6px;
           cursor: pointer;
+          font-weight: 500;
+          transition: background 0.3s;
         }
 
         .nav-right button:hover {
@@ -78,14 +80,214 @@
         }
 
         .content {
-          padding: 20px;
+          padding: 30px 20px;
+          max-width: 1200px;
+          margin: auto;
         }
 
-        /* Mobile Responsiveness */
+        h2 {
+          font-size: 1.8rem;
+          margin-bottom: 20px;
+          color: #0f172a;
+        }
+
+        #filterBar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        #filterBar select,
+        #filterBar input {
+          padding: 10px;
+          font-size: 1rem;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          background-color: #fff;
+          outline: none;
+        }
+
+        #cards-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
+
+        #cards-container .card {
+          width: 100%;
+          max-width: 320px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          transition: transform 0.2s ease;
+        }
+
+        #cards-container .card:hover {
+          transform: translateY(-3px);
+        }
+
+        .card h3 {
+          margin: 0;
+          font-size: 1.25rem;
+          color: #0f172a;
+        }
+
+        .card p {
+          margin: 4px 0;
+          font-size: 0.95rem;
+          color: #475569;
+        }
+
+        .card pre {
+          max-height: 150px;
+          overflow: auto;
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          background-color: #f1f5f9;
+        }
+
+        .card code {
+          font-family: 'Courier New', monospace;
+          white-space: pre-wrap;
+        }
+
+        .card img {
+          width: 100%;
+          height: 150px;
+          object-fit: cover;
+          border-radius: 8px;
+        }
+
+        .card-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 10px;
+        }
+
+        .card-buttons button {
+          padding: 6px 12px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 500;
+          transition: background 0.2s;
+        }
+
+        .card-buttons button:nth-child(1) {
+          background-color: #facc15;
+          color: #1e293b;
+        }
+
+        .card-buttons button:nth-child(1):hover {
+          background-color: #eab308;
+        }
+
+        .card-buttons button:nth-child(2) {
+          background-color: #ef4444;
+          color: white;
+        }
+
+        .card-buttons button:nth-child(2):hover {
+          background-color: #dc2626;
+        }
+
+        .card-buttons button:nth-child(3) {
+          background-color: #3b82f6;
+          color: white;
+        }
+
+        .card-buttons button:nth-child(3):hover {
+          background-color: #2563eb;
+        }
+
+        #editModal {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background-color: rgba(15, 23, 42, 0.7);
+          z-index: 2000;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #editModal > div {
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        #editModal h3 {
+          margin-top: 0;
+          color: #0f172a;
+        }
+
+        #editModal label {
+          font-weight: 500;
+          color: #334155;
+        }
+
+        #editModal input,
+        #editModal textarea {
+          width: 100%;
+          margin-top: 6px;
+          margin-bottom: 15px;
+          padding: 10px;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          background-color: #f8fafc;
+          font-size: 1rem;
+          outline: none;
+        }
+
+        #editModal button[type="submit"] {
+          background-color: #10b981;
+          color: white;
+          padding: 10px 16px;
+          border: none;
+          border-radius: 6px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        #editModal button[type="submit"]:hover {
+          background-color: #059669;
+        }
+
+        #editModal button[type="button"] {
+          background-color: #6b7280;
+          color: white;
+          padding: 10px 16px;
+          border: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin-left: 10px;
+          cursor: pointer;
+        }
+
+        #editModal button[type="button"]:hover {
+          background-color: #4b5563;
+        }
+
         @media (max-width: 768px) {
           nav {
             flex-direction: column;
             align-items: flex-start;
+            padding: 12px 16px;
           }
 
           .nav-left,
@@ -104,16 +306,21 @@
           }
 
           .nav-right img {
-            height: 28px;
-            width: 28px;
+            height: 32px;
+            width: 32px;
           }
 
           .nav-right button {
-            padding: 5px 10px;
+            padding: 6px 10px;
             font-size: 14px;
+          }
+
+          #filterBar {
+            flex-direction: column;
           }
         }
     </style>
+
 </head>
 <body>
 
@@ -121,9 +328,8 @@
 <nav>
     <div class="nav-left">
         <img src="/images/logoW.png" alt="Logo" />
-        <a href="/entry.html">Text</a>
-        <a href="#">Picture</a>
-        <a href="#">Code</a>
+        <a href="/entry.html">Entry</a>
+
     </div>
 
     <div class="nav-right">
