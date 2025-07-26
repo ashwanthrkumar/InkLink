@@ -2,52 +2,233 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Handbook Login</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <title>View Content</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f8fafc;
+          margin: 0;
+          padding: 20px;
+          color: #1e293b;
+        }
+
+        h2 {
+          font-size: 1.75rem;
+          margin-bottom: 10px;
+          color: #0f172a;
+        }
+
+        p {
+          margin: 8px 0;
+          line-height: 1.6;
+        }
+
+        strong {
+          color: #334155;
+        }
+
+        img {
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          max-height: 400px;
+          object-fit: cover;
+        }
+
+        code {
+          font-family: Consolas, monospace;
+          font-size: 0.95rem;
+        }
+
+        pre {
+          background: #0f172a;
+          color: #e2e8f0;
+          padding: 15px;
+          border-radius: 8px;
+          max-height: 300px;
+          overflow: auto;
+          box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        /* Modal Styles */
+        #edit-modal {
+          display: none;
+          position: fixed;
+          z-index: 9999;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(15, 23, 42, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        #edit-modal-content {
+          background: #ffffff;
+          padding: 25px 30px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        #edit-modal-content h3 {
+          margin-top: 0;
+          color: #1e293b;
+          font-size: 1.5rem;
+        }
+
+        #edit-modal-content input,
+        #edit-modal-content textarea {
+          width: 100%;
+          padding: 10px 12px;
+          margin-bottom: 15px;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 1rem;
+          background-color: #f1f5f9;
+        }
+
+        #edit-modal-content textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+
+        #edit-modal-content button {
+          padding: 10px 18px;
+          font-size: 1rem;
+          border-radius: 6px;
+          cursor: pointer;
+          margin-right: 10px;
+          border: none;
+          transition: background 0.3s ease;
+        }
+
+        #edit-modal-content button.save {
+          background-color: #2563eb;
+          color: white;
+        }
+
+        #edit-modal-content button.cancel {
+          background-color: #e2e8f0;
+          color: #1e293b;
+        }
+
+        #edit-modal-content button.save:hover {
+          background-color: #1d4ed8;
+        }
+
+        #edit-modal-content button.cancel:hover {
+          background-color: #cbd5e1;
+        }
+
+        #content-view {
+          background: white;
+          border-radius: 12px;
+          padding: 25px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          max-width: 700px;
+          margin: auto;
+        }
+    </style>
+
 </head>
 <body>
-<h1>Login with Google</h1>
-
-<div id="g_id_onload"
-     data-client_id="720725541229-ua464japbakp70o1f6ln8bq5p9crfe5f.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse">
-</div>
-<div class="g_id_signin" data-type="standard"></div>
+<div id="content-view"></div>
 
 <script>
-    function handleCredentialResponse(response) {
-      fetch("/api/auth/google", {
-        method: "POST",
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("tkn");
+
+    if (!token) {
+      document.getElementById("content-view").innerHTML = "Invalid or missing token.";
+      throw new Error("Missing token");
+    }
+
+    const [id, emailFromToken] = atob(token).split("|");
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    const userEmail = loggedInUser?.email;
+    let currentData = null;
+
+    fetch(`/api/content/${id}?email=${encodeURIComponent(emailFromToken)}`)
+      .then(res => res.json())
+      .then(data => {
+        currentData = data;
+        const container = document.getElementById("content-view");
+        const isOwner = userEmail && userEmail === data.userEmail;
+
+        let contentHTML = "";
+        if (data.type === "picture") {
+          contentHTML = `<img src="${data.content}" style="max-width:100%;" />`;
+        } else if (data.type === "code") {
+          contentHTML = `<pre style="max-height:150px; overflow:auto; background:#1e293b; color:#f1f5f9; padding:10px; border-radius:5px;"><code>${data.content}</code></pre>`;
+        } else {
+          contentHTML = `<p>${data.content}</p>`;
+        }
+
+        container.innerHTML = `
+          <h2>${data.title}</h2>
+          <p><strong>Type:</strong> ${data.type}</p>
+          <p><strong>Created:</strong> ${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}</p>
+          ${contentHTML}
+          ${isOwner ? `
+
+
+          ` : ``}
+        `;
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        document.getElementById("content-view").innerHTML = "Error loading content.";
+      });
+
+    function deleteContent(id, email) {
+      if (confirm("Delete this content?")) {
+        fetch(`/api/content/delete/${id}?email=${encodeURIComponent(email)}`, {
+          method: "DELETE"
+        }).then(() => window.location.href = "/dashboard.html");
+      }
+    }
+
+    // Modal controls
+    function openEditModal() {
+      document.getElementById("edit-title").value = currentData.title;
+      document.getElementById("edit-type").value = currentData.type;
+      document.getElementById("edit-content").value = currentData.content;
+      document.getElementById("edit-modal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("edit-modal").style.display = "none";
+    }
+
+    function saveEdit() {
+      const updatedData = {
+        id: currentData.id,
+        title: document.getElementById("edit-title").value,
+        type: document.getElementById("edit-type").value,
+        content: document.getElementById("edit-content").value,
+        userEmail: currentData.userEmail
+      };
+
+      fetch(`/api/content/update`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ token: response.credential })
+        body: JSON.stringify(updatedData)
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          alert("Login failed: " + data.error);
-          return;
+      .then(res => {
+        if (res.ok) {
+          alert("Updated successfully!");
+         window.location.href = "/dashboard.html";
+        } else {
+          throw new Error("Update failed");
         }
-
-        console.log("Login Success", data);
-
-
-        // ✅ Store data in session storage
-        sessionStorage.setItem("user", JSON.stringify({
-          name: data.name,
-          email: data.email,
-          picture: data.picture
-        }));
-
-        // ✅ Redirect to dashboard
-        window.location.href = "/dashboard.html";
       })
-      .catch(err => {
-        console.error("Login Failed", err);
-      });
+      .catch(err => alert("Error updating content: " + err));
     }
 </script>
-
 </body>
 </html>
