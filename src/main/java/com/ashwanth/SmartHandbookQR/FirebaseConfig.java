@@ -30,7 +30,6 @@
 //    }
 //}
 
-
 package com.ashwanth.SmartHandbookQR;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -39,45 +38,35 @@ import com.google.firebase.FirebaseOptions;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.io.IOException;
 
 @Configuration
 public class FirebaseConfig {
 
+    private static final String PROJECT_ID = "smarthandbookqr"; // 🔹 your GCP project ID
+    private static final String STORAGE_BUCKET = "smarthandbookqr.firebasestorage.app"; // 🔹 your Firebase Storage bucket
+
     @PostConstruct
     public void init() {
         try {
-            // 1. Get the base64 encoded env variable
-            String firebaseJson = System.getenv("FIREBASE_SERVICE_ACCOUNT");
+            // 1. Load ADC credentials
+            GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
 
-//            if (firebaseJsonBase64 == null || firebaseJsonBase64.isEmpty()) {
-//                throw new IllegalStateException("FIREBASE_SERVICE_ACCOUNT env variable not set or empty");
-//            }
-
-            // 2. Decode the Base64 string to get JSON content
-//            byte[] decodedBytes = Base64.getDecoder().decode(firebaseJsonBase64);
-//            InputStream serviceAccount = new ByteArrayInputStream(decodedBytes);
-
-            // 2. Convert it to InputStream
-           InputStream serviceAccount = new ByteArrayInputStream(firebaseJson.getBytes(StandardCharsets.UTF_8));
-
-            // 3. Use it for Firebase initialization
+            // 2. Build FirebaseOptions using ADC credentials and explicit projectId + storage bucket
             FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setStorageBucket("smarthandbookqr.firebasestorage.app")
+                    .setCredentials(credentials)
+                    .setProjectId(PROJECT_ID)
+                    .setStorageBucket(STORAGE_BUCKET)
                     .build();
 
-            // 4. Initialize Firebase only once
+            // 3. Initialize Firebase only once
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("Firebase initialized from ENV variable.");
+                System.out.println("Firebase initialized using strict ADC. Project: " + PROJECT_ID);
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to initialize Firebase using ADC", e);
         }
     }
 }

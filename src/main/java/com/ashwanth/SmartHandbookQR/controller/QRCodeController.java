@@ -4,7 +4,7 @@ import com.ashwanth.SmartHandbookQR.model.ContentItem;
 import com.ashwanth.SmartHandbookQR.service.FirestoreContentService;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.datamatrix.DataMatrixWriter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -22,23 +22,25 @@ public class QRCodeController {
     private final FirestoreContentService contentService;
 
     @GetMapping(value = "/{id}", produces = MediaType.IMAGE_PNG_VALUE)
-    public void generateQRCode(@PathVariable String id,
-                               @RequestParam String email,
-                               HttpServletResponse response) throws Exception {
+    public void generateDataMatrix(@PathVariable String id,
+                                   @RequestParam String email,
+                                   HttpServletResponse response) throws Exception {
 
+        // Fetch content
         ContentItem item = contentService.getById(id, email);
         String rawToken = item.getId() + "|" + item.getUserEmail();
         String encodedToken = Base64.getEncoder().encodeToString(rawToken.getBytes());
 
-        String qrUrl = "https://inklink-720725541229.asia-south1.run.app/view.html?tkn=" + encodedToken;
+        String dataUrl = "https://inklink-720725541229.asia-south1.run.app/view.html?tkn=" + encodedToken;
 
-        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        var bitMatrix = qrCodeWriter.encode(qrUrl, BarcodeFormat.QR_CODE, 300, 300);
+        // Generate Data Matrix
+        DataMatrixWriter dataMatrixWriter = new DataMatrixWriter();
+        var bitMatrix = dataMatrixWriter.encode(dataUrl, BarcodeFormat.DATA_MATRIX, 300, 300);
 
+        // Write to response
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        OutputStream outputStream = response.getOutputStream();
-        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
-        outputStream.flush();
-        outputStream.close();
+        try (OutputStream outputStream = response.getOutputStream()) {
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+        }
     }
 }
